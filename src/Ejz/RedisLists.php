@@ -7,16 +7,16 @@ use Ejz\RedisClient;
 class RedisLists
 {
     /** @var RedisClient */
-    private $redisClient;
+    private $redis;
 
     private $prefix = 'RedisLists.';
 
     /**
-     * @param RedisClient $redisClient
+     * @param RedisClient $redis
      */
-    public function __construct(RedisClient $redisClient)
+    public function __construct(RedisClient $redis)
     {
-        $this->redisClient = $redisClient;
+        $this->redis = $redis;
     }
 
     /**
@@ -106,5 +106,16 @@ class RedisLists
             $list,
             $ttl
         ]);
+    }
+
+    /**
+     * @param string $list
+     *
+     * @return array
+     */
+    public function all(string $list): array
+    {
+        $this->redis->ZREMRANGEBYSCORE($this->prefix . $list, '-inf', time());
+        return (array) $this->redis->ZRANGE($this->prefix . $list, 0, -1);
     }
 }
