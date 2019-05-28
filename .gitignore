@@ -1,0 +1,5 @@
+*.phar
+*.lock
+*.sublime-project
+*.sublime-workspace
+vendor
