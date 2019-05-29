@@ -72,16 +72,23 @@ class RedisLists
      */
     private function takeBackend(string $list, int $ttl): ?string
     {
+        $list = explode(':', $list);
+        [$list, $virtual] = [$list[0], $list[1] ?? ''];
         return $this->redis->EVAL('
             local prefix = ARGV[1]
             local time = ARGV[2]
             math.randomseed(tonumber(ARGV[3]))
             local list = ARGV[4]
-            local ttl = tonumber(ARGV[5])
+            local virtual = ARGV[5]
+            local ttl = tonumber(ARGV[6])
+            local taken_prefix = ".taken"
+            if virtual ~= "" then
+                taken_prefix = "." .. virtual .. taken_prefix
+            end
             redis.call("ZREMRANGEBYSCORE", prefix .. list, "-inf", time)
-            redis.call("ZREMRANGEBYSCORE", prefix .. list .. ".taken", "-inf", time)
+            redis.call("ZREMRANGEBYSCORE", prefix .. list .. taken_prefix, "-inf", time)
             local items = redis.call("ZRANGE", prefix .. list, 0, -1)
-            local taken = redis.call("ZRANGE", prefix .. list .. ".taken", 0, -1)
+            local taken = redis.call("ZRANGE", prefix .. list .. taken_prefix, 0, -1)
             local _ = {}
             for i = 1, #taken do _[taken[i]] = true end
             taken = _
@@ -95,7 +102,7 @@ class RedisLists
             end)
             for i = 1, #items do
                 if not taken[items[i].value] then
-                    redis.call("ZADD", prefix .. list .. ".taken", ttl, items[i].value)
+                    redis.call("ZADD", prefix .. list .. taken_prefix, ttl, items[i].value)
                     return items[i].value
                 end
             end
@@ -104,6 +111,7 @@ class RedisLists
             time(),
             mt_rand(),
             $list,
+            $virtual,
             $ttl
         ]);
     }
