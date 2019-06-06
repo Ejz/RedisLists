@@ -105,4 +105,22 @@ class RedisListsTest extends TestCase
         $mc = round(microtime(1) - $mc, 1);
         $this->assertTrue($mc < 1);
     }
+
+    /**
+     * @test
+     */
+    public function test_redis_lists_pop_max_min()
+    {
+        $this->lists->insert('tt', 1, 1000);
+        $this->lists->insert('tt', 2, 1001);
+        $this->lists->insert('tt', 3, 1002);
+        $this->lists->insert('tt', 4, 1);
+        $this->lists->insert('tt', 44, 2);
+        $this->lists->insert('tt', 5, 1003);
+        $this->assertEquals(5, $this->lists->popMax('tt'));
+        $this->assertEquals(4, $this->lists->popMin('tt'));
+        sleep(2);
+        $this->assertEquals(1, $this->lists->popMin('tt'));
+        $this->assertEquals(3, $this->lists->popMax('tt'));
+    }
 }

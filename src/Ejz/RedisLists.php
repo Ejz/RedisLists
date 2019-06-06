@@ -42,6 +42,30 @@ class RedisLists
 
     /**
      * @param string $list
+     *
+     * @return ?string
+     */
+    public function popMin(string $list): ?string
+    {
+        $this->redis->ZREMRANGEBYSCORE($this->prefix . $list, '-inf', time());
+        $items = $this->redis->ZPOPMIN($this->prefix . $list);
+        return $items[0] ?? null;
+    }
+
+    /**
+     * @param string $list
+     *
+     * @return ?string
+     */
+    public function popMax(string $list): ?string
+    {
+        $this->redis->ZREMRANGEBYSCORE($this->prefix . $list, '-inf', time());
+        $items = $this->redis->ZPOPMAX($this->prefix . $list);
+        return $items[0] ?? null;
+    }
+
+    /**
+     * @param string $list
      */
     public function removeAll(string $list)
     {
