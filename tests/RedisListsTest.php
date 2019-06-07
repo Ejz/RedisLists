@@ -36,11 +36,11 @@ class RedisListsTest extends TestCase
         $this->lists->insert('whitelist', 3, 10);
         sleep(2);
         $all = $this->lists->all('whitelist');
-        $this->assertTrue($all === ['3']);
+        $this->assertTrue($all === [3]);
         $this->lists->remove('whitelist', 3);
         $this->lists->insert('whitelist', 4, 10);
         $all = $this->lists->all('whitelist');
-        $this->assertTrue($all === ['4']);
+        $this->assertTrue($all === [4]);
     }
 
     /**
@@ -57,7 +57,7 @@ class RedisListsTest extends TestCase
             $_ = $this->lists->take('whitelist', 10),
         ];
         sort($taken);
-        $this->assertTrue($taken === ['1', '2', '3']);
+        $this->assertTrue($taken === [1, 2, 3]);
         $taken = [
             $this->lists->take('whitelist', 1),
             $this->lists->take('whitelist', 1),
@@ -80,14 +80,14 @@ class RedisListsTest extends TestCase
             $_ = $this->lists->take('whitelist:1', 10),
         ];
         sort($taken);
-        $this->assertTrue($taken === ['1', '2', '3']);
+        $this->assertTrue($taken === [1, 2, 3]);
         $taken = [
             $this->lists->take('whitelist:2', 10),
             $this->lists->take('whitelist:2', 10),
             $_ = $this->lists->take('whitelist:2', 10),
         ];
         sort($taken);
-        $this->assertTrue($taken === ['1', '2', '3']);
+        $this->assertTrue($taken === [1, 2, 3]);
     }
 
     /**
@@ -122,5 +122,22 @@ class RedisListsTest extends TestCase
         sleep(2);
         $this->assertEquals(1, $this->lists->popMin('tt'));
         $this->assertEquals(3, $this->lists->popMax('tt'));
+    }
+
+    /**
+     * @test
+     */
+    public function test_redis_lists_pack_unpack()
+    {
+        $items = [1, '1', 1.1, [1, 2], ['foo' => 'bar']];
+        foreach ($items as $item) {
+            $this->lists->insert('tt', $item, 1000);
+        }
+        foreach ($items as $_) {
+            $item = $this->lists->take('tt', 100);
+            $this->assertTrue(
+                in_array(serialize($item), array_map('serialize', $items))
+            );
+        }
     }
 }
