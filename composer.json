@@ -18,7 +18,8 @@
     ],
     "require": {
         "php": ">=7.1.0",
-        "ejz/redisclient": "~1.0"
+        "ejz/redisclient": "~1.0",
+        "amphp/amp": "^2.2"
     },
     "autoload": {
         "psr-4": {"Ejz\\": "src/Ejz"}

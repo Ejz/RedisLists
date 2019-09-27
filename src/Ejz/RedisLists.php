@@ -79,6 +79,35 @@ class RedisLists
      * @param string     $list
      * @param string|int $ttl
      *
+     * @return \Amp\Promise
+     */
+    public function takeAsync(string $list, $ttl): \Amp\Promise
+    {
+        $time = is_numeric($ttl) ? time() + $ttl : strtotime($ttl);
+        $deferred = new \Amp\Deferred();
+        $promise = $deferred->promise();
+        $take = function ($timer) use ($list, $time, &$deferred) {
+            $item = $this->takeBackend($list, $time);
+            if ($item === null) {
+                return;
+            }
+            if ($timer !== null) {
+                \Amp\Loop::cancel($timer);
+            }
+            $deferred->resolve($this->unpack($item));
+            $deferred = null;
+        };
+        $take(null);
+        if ($deferred !== null) {
+            \Amp\Loop::repeat(3000, $take);
+        }
+        return $promise;
+    }
+
+    /**
+     * @param string     $list
+     * @param string|int $ttl
+     *
      * @return mixed
      */
     public function take(string $list, $ttl)
