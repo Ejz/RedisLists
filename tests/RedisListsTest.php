@@ -1,7 +1,7 @@
 <?php
 
-use Ejz\RedisClient;
 use Ejz\RedisLists;
+use Ejz\RedisClient;
 use PHPUnit\Framework\TestCase;
 
 class RedisListsTest extends TestCase
@@ -10,14 +10,14 @@ class RedisListsTest extends TestCase
     private $lists;
 
     /**
-     *
+     * @return void
      */
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
-        $redisClient = new RedisClient();
-        $redisClient->FLUSHDB();
-        $this->lists = new RedisLists($redisClient);
+        $client = new RedisClient();
+        $client->FLUSHDB();
+        $this->lists = new RedisLists($client);
     }
 
     /**
@@ -77,14 +77,14 @@ class RedisListsTest extends TestCase
         $taken = [
             $this->lists->take('whitelist:1', 10),
             $this->lists->take('whitelist:1', 10),
-            $_ = $this->lists->take('whitelist:1', 10),
+            $this->lists->take('whitelist:1', 10),
         ];
         sort($taken);
         $this->assertTrue($taken === [1, 2, 3]);
         $taken = [
             $this->lists->take('whitelist:2', 10),
             $this->lists->take('whitelist:2', 10),
-            $_ = $this->lists->take('whitelist:2', 10),
+            $this->lists->take('whitelist:2', 10),
         ];
         sort($taken);
         $this->assertTrue($taken === [1, 2, 3]);
@@ -109,7 +109,7 @@ class RedisListsTest extends TestCase
     /**
      * @test
      */
-    public function test_redis_lists_pop_max_min()
+    public function test_redis_lists_lru()
     {
         $this->lists->insert('tt', 1, 1000);
         $this->lists->insert('tt', 2, 1001);
@@ -117,11 +117,9 @@ class RedisListsTest extends TestCase
         $this->lists->insert('tt', 4, 1);
         $this->lists->insert('tt', 44, 2);
         $this->lists->insert('tt', 5, 1003);
-        $this->assertEquals(5, $this->lists->popMax('tt'));
-        $this->assertEquals(4, $this->lists->popMin('tt'));
+        $this->assertEquals(4, $this->lists->lru('tt'));
         sleep(2);
-        $this->assertEquals(1, $this->lists->popMin('tt'));
-        $this->assertEquals(3, $this->lists->popMax('tt'));
+        $this->assertEquals(1, $this->lists->lru('tt'));
     }
 
     /**
@@ -129,7 +127,7 @@ class RedisListsTest extends TestCase
      */
     public function test_redis_lists_pack_unpack()
     {
-        $items = [1, '1', 1.1, [1, 2], ['foo' => 'bar']];
+        $items = [1, '1', 1.1, [1], null, new stdClass()];
         foreach ($items as $item) {
             $this->lists->insert('tt', $item, 1000);
         }
