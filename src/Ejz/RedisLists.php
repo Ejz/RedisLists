@@ -26,6 +26,14 @@ class RedisLists
     }
 
     /**
+     * @return RedisClient
+     */
+    public function getClient(): RedisClient
+    {
+        return $this->client;
+    }
+
+    /**
      * @param string $list
      * @param mixed  $item
      * @param int    $ttl
